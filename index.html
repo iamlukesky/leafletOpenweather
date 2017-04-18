@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>tourMap</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.15/leaflet-providers.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+      }
+      html, body{
+        height: 100vh;
+        width: 100vw;
+      }
+      #map{
+        height: 50%;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="map"></div>
+    <div id="weather"></div>
+
+    <script>
+
+      var map = L.map('map');
+      L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
+      map.setView([59.311162, 18.074806], 13);
+
+      var data = [];
+
+      d3.json("http://api.openweathermap.org/data/2.5/forecast/daily?lat=59.308837&lon=17.989356&cnt=10&appid=c49e630f0dba743273c6876aea593115",
+        function(error, json) {
+          if(error) return console.warn(error);
+          console.log(json);
+
+          data.push(json);
+
+          body = d3.select("body");
+
+          // div = d3.select("#weather")
+          div = body.selectAll("p")
+              .data(data)
+              .enter();
+
+          console.log(div);
+
+          div
+            .append("h1")
+            .text(function(d) {
+              return d.city.name;
+            });
+
+    
+          console.log(json.list);
+
+          div
+            .selectAll("p")
+            .data(json.list)
+            .enter()  
+            .append("p")
+            .text(function(d) {
+              return d.weather[0].description;
+            });
+          });
+
+
+    </script>
+
+  </body>
+</html>
