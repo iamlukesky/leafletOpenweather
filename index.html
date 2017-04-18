@@ -15,12 +15,19 @@
         margin: 0;
       }
       html, body{
-        height: 100vh;
-        width: 100vw;
+        height: 100%;
       }
       #map{
         height: 50%;
       }
+
+      .enter{
+        color: green;
+      }
+      .update{
+        color: #333;
+      }
+
     </style>
   </head>
   <body>
@@ -34,43 +41,54 @@
       L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
       map.setView([59.311162, 18.074806], 13);
 
-      var data = [];
+      map.on('click', onMapClick);
 
-      d3.json("http://api.openweathermap.org/data/2.5/forecast/daily?lat=59.308837&lon=17.989356&cnt=10&appid=c49e630f0dba743273c6876aea593115",
-        function(error, json) {
-          if(error) return console.warn(error);
-          console.log(json);
+      var weather = d3.select("#weather");
 
-          data.push(json);
 
-          body = d3.select("body");
+      function onMapClick(e){
+        // draw(update(e.latlng.lat, e.latlng.lng));
+        update(e.latlng.lat, e.latlng.lng);
+      }
 
-          // div = d3.select("#weather")
-          div = body.selectAll("p")
-              .data(data)
-              .enter();
 
-          console.log(div);
+      function update(lat, lng){
+        var data = [];
 
-          div
-            .append("h1")
-            .text(function(d) {
-              return d.city.name;
-            });
+        d3.json("http://api.openweathermap.org/data/2.5/forecast/daily?lat="+ lat + "&lon="+ lng + "&cnt=10&appid=c49e630f0dba743273c6876aea593115",
+          function(error, json) {
+            if(error) return console.warn(error);
 
-    
-          console.log(json.list);
+            data.push(json);
+            draw(data);
 
-          div
-            .selectAll("p")
-            .data(json.list)
-            .enter()  
-            .append("p")
-            .text(function(d) {
-              return d.weather[0].description;
-            });
+          });
+      }
+
+
+      function draw(dataset){
+
+        var key = function(d){
+          return d.city.name;
+        }
+
+        var info = weather.selectAll("p")
+          .data(dataset, key);
+
+        info
+          .attr("class", "update");
+
+        info
+          .enter()
+          .append("p")
+          .attr("class", "enter")
+          .text(function(d){
+            return d.city.name;
           });
 
+        info.exit().remove();
+
+      }
 
     </script>
 
