@@ -17,7 +17,7 @@
       html, body{
         height: 100%;
       }
-      #map{
+      #map, #weather{
         height: 50%;
       }
 
@@ -33,7 +33,11 @@
   <body>
 
     <div id="map"></div>
-    <div id="weather"></div>
+    <div id="weather">
+      
+    <svg width="500" height="300"></svg>
+
+    </div>
 
     <script>
 
@@ -43,13 +47,9 @@
 
       map.on('click', onMapClick);
 
-      var weather = d3.select("#weather");
-
-
       function onMapClick(e){
         update(e.latlng.lat, e.latlng.lng);
       }
-
 
       function update(lat, lng){
         var data = [];
@@ -63,6 +63,8 @@
         + "lang=sv"
         + "&units=si";
 
+        console.log(urlDarksky);
+
         d3.json(localproxy + urlDarksky,
           function(error, json) {
             if(error) return console.warn(error);
@@ -73,31 +75,117 @@
           });
       }
 
+      var weather = d3.select("#weather");
+
+      var svg = d3.select("svg"),
+       margin = {top: 20, right: 20, bottom: 30, left: 50},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var parseTime = d3.timeParse("%d-%y");
+
+      var xScale = d3.scaleTime()
+        .rangeRound([0, width]);
+
+      var yScale = d3.scaleLinear()
+        .rangeRound([height, 0]);
+
+      var line = d3.line()
+        .x(function(d){ 
+          console.log(d.time);
+          return xScale(d.time);
+        })
+        .y(function(d){
+          return yScale(d.temperature);
+        });
+
+      g.append("g")
+        .attr("class", "axisBottom");
+
+      g.append("g")
+        .attr("class", "axisLeft")
+        .append("text");
+
+      g.append("path")
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5);
+
 
       function draw(dataset){
 
         var key = function(d){
-          return d.currently.summary;
+          // return d.currently.summary;
+          return d.time;
         }
 
-        console.log(dataset);
+        var mydata = dataset[0].hourly.data;
+        mydata.forEach(function(d){
+          d.time = new Date(d.time * 1000);
+          d.temperature = +d.temperature;
+        })
 
-        var info = weather.selectAll("p")
-          .data(dataset, key);
+        xScale.domain(d3.extent(mydata, function(d) { return d.time; }));
+        // yScale.domain([-40, 40]);
+        yScale.domain(d3.extent(mydata, function(d) { return d.temperature; }));
 
-        info
-          .attr("class", "update");
+        
+        g.select(".line")
+          .transition()
+          .duration(500)
+          .attr("d", line(mydata));
 
-        info
-          .enter()
-          .append("p")
-          .attr("class", "enter")
-          .text(function(d){
-            return d.currently.summary;
-            // return d.city.name;
-          });
+        g.select(".axisBottom")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(xScale));
 
-        info.exit().remove();
+        g.select(".axisLeft")
+          .call(d3.axisLeft(yScale))
+          .select("text")
+          .attr("fill", "#000")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", "0.71em")
+          .attr("text-anchor", "end")
+          .text("temp");
+
+        //mouseover
+        svg.selectAll("circle")
+          .data(mydata)
+          .enter().append("circle")
+          .attr("r", 5)
+          .attr("cx", function(d){
+            return xScale(d.time);
+          })
+          .attr("cy", function(d){
+            return yScale(d.temperature);
+          })
+          .style("fill","none")
+          .style("stroke","none")
+          .style("pointer-events","all")
+          .append("title")
+          .text(function(d) { return "Temp: " + d.temperature + "°"; });
+
+        console.log(mydata);
+
+        // var info = weather.selectAll("p")
+        //   .data(dataset, key);
+
+        // info
+        //   .attr("class", "update");
+
+        // info
+        //   .enter()
+        //   .append("p")
+        //   .attr("class", "enter")
+        //   .text(function(d){
+        //     return d.currently.summary;
+        //     // return d.city.name;
+        //   });
+
+        // info.exit().remove();
 
       }
 
