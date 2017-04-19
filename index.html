@@ -54,13 +54,16 @@
       function update(lat, lng){
         var data = [];
 
+        var localproxy = "proxy?url="
+        // var localproxy = "http://localhost:3000/?url="
+
         var urlOpenweather = "http://api.openweathermap.org/data/2.5/forecast/daily?lat="+ lat + "&lon="+ lng + "&cnt=10&appid=c49e630f0dba743273c6876aea593115";
 
         var urlDarksky = "https://api.darksky.net/forecast/b0b3a61c7b298b74be766a5d9a40bf70/" + lat + "," + lng + "?"
         + "lang=sv"
         + "&units=si";
 
-        d3.json(urlDarksky,
+        d3.json(localproxy + urlDarksky,
           function(error, json) {
             if(error) return console.warn(error);
 
@@ -74,8 +77,10 @@
       function draw(dataset){
 
         var key = function(d){
-          return d.city.name;
+          return d.currently.summary;
         }
+
+        console.log(dataset);
 
         var info = weather.selectAll("p")
           .data(dataset, key);
@@ -88,7 +93,8 @@
           .append("p")
           .attr("class", "enter")
           .text(function(d){
-            return d.city.name;
+            return d.currently.summary;
+            // return d.city.name;
           });
 
         info.exit().remove();
