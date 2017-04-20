@@ -11,7 +11,7 @@ app.use('/darkskyForecast', function(req, res){
 		+ req.query.lat
 		+ ','
 		+ req.query.lng
-		+ '?lang=sv&units=si';
+		+ '?lang=sv&units=si&extend=hourly';
 	req.pipe(request(url)).pipe(res);
 });
 
