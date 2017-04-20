@@ -15,7 +15,7 @@
         margin: 0;
       }
       html, body{
-        height: 99%;
+        height: 100%;
       }
       #map, #weather{
         height: 50%;
@@ -43,19 +43,36 @@
 
     <script>
 
+      var sthlm = [59.311162, 18.074806];
       var map = L.map('map');
       L.tileLayer.provider('OpenStreetMap.BlackAndWhite').addTo(map);
-      map.setView([59.311162, 18.074806], 13);
+      map.setView(sthlm, 13);
+
+      // var marker = L.marker(sthlm).addTo(map);
+      update(sthlm[0], sthlm[1]);
+
+      var circle = L.circleMarker(sthlm, {
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.5,
+        radius: 5
+      }).addTo(map);
 
       map.on('click', onMapClick);
 
       function onMapClick(e){
         update(e.latlng.lat, e.latlng.lng);
+        circle.setLatLng(e.latlng);
+        circle.setStyle({
+          color: "red",
+          fillColor: "red"
+        });
       }
 
-      function update(lat, lng){
-        var data = [];
+      var data = [];
 
+      function update(lat, lng){
+        
         var urlDarksky = "http://localhost:3000/darkskyForecast?lat=" + lat
           + "&lng=" + lng;
 
@@ -65,8 +82,13 @@
           function(error, json) {
             if(error) return console.warn(error);
 
-            data.push(json);
+            data.unshift(json);
             draw(data);
+
+            circle.setStyle({
+              color: "green",
+              fillColor: "green"
+            });            
 
           });
       }
@@ -77,7 +99,10 @@
        margin = {top: 20, right: 20, bottom: 30, left: 50},
         width = parseInt(svg.style("width")) - margin.left - margin.right,
         height = parseInt(svg.style("height")) - margin.top - margin.bottom;
-        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var chart = svg.append("g")
+          .attr("class", "chart")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
       var parseTime = d3.timeParse("%d-%y");
 
@@ -87,23 +112,21 @@
       var yScale = d3.scaleLinear()
         .rangeRound([height, 0]);
 
-      var line = d3.line()
-        .x(function(d){ 
-          console.log(d.time);
-          return xScale(d.time);
-        })
-        .y(function(d){
-          return yScale(d.temperature);
-        });
+      var lineTemperature = d3.line()
+        .x(function(d){ return xScale(d.time); })
+        .y(function(d){ return yScale(d.temperature); });
 
-      g.append("g")
+      graphTemperature = chart.append("g")
+        .attr("class", "graphTemperature");
+      graphTemperature
+        .append("g") 
         .attr("class", "axisBottom");
-
-      g.append("g")
+      graphTemperature
+        .append("g")
         .attr("class", "axisLeft")
         .append("text");
-
-      g.append("path")
+      graphTemperature
+        .append("path")
         .attr("class", "line")
         .attr("fill", "none")
         .attr("stroke", "steelblue")
@@ -112,32 +135,33 @@
 
       function draw(dataset){
 
-        var key = function(d){
-          // return d.currently.summary;
-          return d.time;
-        }
-
         var mydata = dataset[0].hourly.data;
         mydata.forEach(function(d){
           d.time = new Date(d.time * 1000);
           d.temperature = +d.temperature;
         })
 
-        xScale.domain(d3.extent(mydata, function(d) { return d.time; }));
-        // yScale.domain([-40, 40]);
-        yScale.domain(d3.extent(mydata, function(d) { return d.temperature; }));
+        var key = function(d){
+          return d.time;
+        }
 
-        
-        g.select(".line")
+        xScale.domain(d3.extent(mydata, function(d) { return d.time; }));
+        yScale.domain([-40, 40]);
+        // yScale.domain(d3.extent(mydata, function(d) { return d.temperature; }));
+
+        graphTemperature
+          .select(".line")
           .transition()
           .duration(500)
-          .attr("d", line(mydata));
+          .attr("d", lineTemperature(mydata));
 
-        g.select(".axisBottom")
+        graphTemperature
+          .select(".axisBottom")
           .attr("transform", "translate(0," + height + ")")
           .call(d3.axisBottom(xScale));
 
-        g.select(".axisLeft")
+        graphTemperature
+          .select(".axisLeft")
           .call(d3.axisLeft(yScale))
           .select("text")
           .attr("fill", "#000")
@@ -147,41 +171,22 @@
           .attr("text-anchor", "end")
           .text("temp");
 
-        //mouseover
-        svg.selectAll("circle")
-          .data(mydata)
-          .enter().append("circle")
-          .attr("r", 5)
-          .attr("cx", function(d){
-            return xScale(d.time);
-          })
-          .attr("cy", function(d){
-            return yScale(d.temperature);
-          })
-          .style("fill","none")
-          .style("stroke","none")
-          .style("pointer-events","all")
-          .append("title")
-          .text(function(d) { return "Temp: " + d.temperature + "°"; });
-
-        console.log(mydata);
-
-        // var info = weather.selectAll("p")
-        //   .data(dataset, key);
-
-        // info
-        //   .attr("class", "update");
-
-        // info
-        //   .enter()
-        //   .append("p")
-        //   .attr("class", "enter")
-        //   .text(function(d){
-        //     return d.currently.summary;
-        //     // return d.city.name;
-        //   });
-
-        // info.exit().remove();
+        // //mouseover
+        // svg.selectAll("circle")
+        //   .data(mydata)
+        //   .enter().append("circle")
+        //   .attr("r", 5)
+        //   .attr("cx", function(d){
+        //     return xScale(d.time);
+        //   })
+        //   .attr("cy", function(d){
+        //     return yScale(d.temperature);
+        //   })
+        //   .style("fill","none")
+        //   .style("stroke","none")
+        //   .style("pointer-events","all")
+        //   .append("title")
+        //   .text(function(d) { return "Temp: " + d.temperature + "°"; });
 
       }
 
