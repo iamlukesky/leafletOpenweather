@@ -257,14 +257,15 @@
         var bars = graphPrecipitation
           .selectAll("rect")
           .data(mydata);
-        bars  
+        bars.exit().remove();
+        bars
           .enter()
           .append("rect")
           .attr("class", "bar")
-          // .attr("x", function(d){ return xScalePrecipitation(d.time); })
-          // .attr("y", function(d){ return yScalePrecipitation(d.precipIntensity)})
-          // .attr("width", xScalePrecipitation.bandwidth())
-          // .attr("height", function(d){ return heightPrecipitation - yScalePrecipitation(d.precipIntensity)});;
+          .attr("x", function(d){ return xScalePrecipitation(d.time); })
+          .attr("y", function(d){ return yScalePrecipitation(d.precipIntensity)})
+          .attr("width", xScalePrecipitation.bandwidth())
+          .attr("height", function(d){ return heightPrecipitation - yScalePrecipitation(d.precipIntensity)});
         bars
           .transition()
           .duration(500)
