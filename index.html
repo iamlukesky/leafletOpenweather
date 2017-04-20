@@ -30,6 +30,12 @@
         color: #333;
       }
 
+      .bar{
+        fill: blue;
+        stroke: none;
+        opacity: 0.3;
+      }
+
     </style>
   </head>
   <body>
@@ -113,12 +119,16 @@
       // height of individual charts
       var heightTemperature = height / 2;
       var heightPressure = height / 3;
+      var heightPrecipitation = height / 2;
 
-      // yScales of individual charts
+      // Scales of individual charts
       var yScaleTemperature = d3.scaleLinear()
         .rangeRound([heightTemperature, 0]);
       var yScalePressure = d3.scaleLinear()
         .rangeRound([heightPressure, 0]);
+      var xScalePrecipitation = d3.scaleBand().rangeRound([0, width], 0.05).padding(0.3);
+      var yScalePrecipitation = d3.scaleLinear()
+        .rangeRound([heightPrecipitation, 0]);
 
       // lines of individual charts
       var lineTemperature = d3.line()
@@ -162,6 +172,13 @@
         .attr("fill", "none")
         .attr("stroke", "black")
         .attr("stroke-width", 1);
+      //precipitation
+      graphPrecipitation = chart.append("svg")
+        .attr("class", "graphPrecipitation")
+        .lower()
+        .style("height", heightPrecipitation)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + heightTemperature + ")");
 
 
       function draw(dataset){
@@ -172,10 +189,17 @@
           d.temperature = +d.temperature;
         })
 
+        var key = function(d){
+          return d.time;
+        };
+
         // setup graph domains
         xScaleTime.domain(d3.extent(mydata, function(d) { return d.time; }));
         yScaleTemperature.domain([-40, 40]);
         yScalePressure.domain([950, 1050]);
+        // xScalePrecipitation.domain(d3.extent(mydata, function(d) { return d.time; }));
+        xScalePrecipitation.domain(mydata.map(function(d) {return d.time }));
+        yScalePrecipitation.domain([0, 1]);
 
         // update xAxis
         chart
@@ -216,6 +240,27 @@
           .attr("dy", "0.71em")
           .attr("text-anchor", "end")
           .text("hpa");
+        // precipitation
+        var bars = graphPrecipitation
+          .selectAll("rect")
+          .data(mydata);
+        bars  
+          .enter()
+          .append("rect")
+          .attr("class", "bar")
+          // .attr("x", function(d){ return xScalePrecipitation(d.time); })
+          // .attr("y", function(d){ return yScalePrecipitation(d.precipIntensity)})
+          // .attr("width", xScalePrecipitation.bandwidth())
+          // .attr("height", function(d){ return heightPrecipitation - yScalePrecipitation(d.precipIntensity)});;
+        bars
+          .transition()
+          .duration(500)
+          .attr("x", function(d){ return xScalePrecipitation(d.time); })
+          .attr("y", function(d){ return yScalePrecipitation(d.precipIntensity)})
+          .attr("width", xScalePrecipitation.bandwidth())
+          .attr("height", function(d){ return heightPrecipitation - yScalePrecipitation(d.precipIntensity)});
+        // bars
+        //   .exit().remove();
 
         // //mouseover
         // svg.selectAll("circle")
