@@ -56,18 +56,12 @@
       function update(lat, lng){
         var data = [];
 
-        var localproxy = "proxy?url="
-        // var localproxy = "http://localhost:3000/?url="
-
-        var urlOpenweather = "http://api.openweathermap.org/data/2.5/forecast/daily?lat="+ lat + "&lon="+ lng + "&cnt=10&appid=c49e630f0dba743273c6876aea593115";
-
-        var urlDarksky = "https://api.darksky.net/forecast/b0b3a61c7b298b74be766a5d9a40bf70/" + lat + "," + lng + "?"
-        + "lang=sv"
-        + "&units=si";
+        var urlDarksky = "http://localhost:3000/darkskyForecast?lat=" + lat
+          + "&lng=" + lng;
 
         console.log(urlDarksky);
 
-        d3.json(localproxy + urlDarksky,
+        d3.json(urlDarksky,
           function(error, json) {
             if(error) return console.warn(error);
 

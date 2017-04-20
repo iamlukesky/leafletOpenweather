@@ -2,13 +2,21 @@ var express = require('express');
 var request = require('request');
 
 var app = express();  
-app.use('/proxy', function(req, res) {  
-  var url = req.url.replace('/?url=', '');
-  req.pipe(request(url)).pipe(res);
+
+app.use('/darkskyForecast', function(req, res){
+	var url =
+		'https://api.darksky.net/forecast/'
+		+ process.env.API_KEY
+		+ '/'
+		+ req.query.lat
+		+ ','
+		+ req.query.lng
+		+ '?lang=sv&units=si';
+	req.pipe(request(url)).pipe(res);
 });
 
 app.get('/', function(req, res){
 	res.sendFile('/index.html', {root: __dirname});
 });
 
-app.listen(process.env.PORT || 3000);  
+app.listen(process.env.PORT || 3000);
