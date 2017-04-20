@@ -36,6 +36,10 @@
         opacity: 0.3;
       }
 
+      line{
+        shape-rendering: crispEdges;
+      }
+
     </style>
   </head>
   <body>
@@ -224,6 +228,15 @@
           .attr("dy", "0.71em")
           .attr("text-anchor", "end")
           .text("temp");
+        graphTemperature
+          .append("line")
+          .lower()
+          .attr("x1", 0)
+          .attr("y1", yScaleTemperature(0))
+          .attr("x2", width)
+          .attr("y2", yScaleTemperature(0))
+          .attr("stroke-width", "1px")
+          .attr("stroke", "black");
         // pressure
         graphPressure
           .select(".line")
