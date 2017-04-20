@@ -36,9 +36,7 @@
 
     <div id="map"></div>
     <div id="weather">
-      
-    <svg width="100%" height="100%"></svg>
-
+      <svg width="100%" height="100%"></svg>
     </div>
 
     <script>
@@ -95,32 +93,36 @@
 
       var weather = d3.select("#weather");
 
-      var svg = d3.select("svg"),
-       margin = {top: 20, right: 20, bottom: 30, left: 50},
-        width = parseInt(svg.style("width")) - margin.left - margin.right,
-        height = parseInt(svg.style("height")) - margin.top - margin.bottom;
-
-      var chart = svg.append("g")
-          .attr("class", "chart")
-          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      var chart = weather.select("svg");
+      var margin = {top: 20, right: 20, bottom: 30, left: 50};
+      var width = parseInt(chart.style("width")) - margin.left - margin.right;
+      var height = parseInt(chart.style("height")) - margin.top - margin.bottom;
 
       var parseTime = d3.timeParse("%d-%y");
-
-      var xScale = d3.scaleTime()
+      var xScaleTime = d3.scaleTime()
         .rangeRound([0, width]);
 
-      var yScale = d3.scaleLinear()
-        .rangeRound([height, 0]);
+      var heightTemperature = height / 2;
+
+      var yScaleTemperature = d3.scaleLinear()
+        .rangeRound([heightTemperature, 0]);
 
       var lineTemperature = d3.line()
-        .x(function(d){ return xScale(d.time); })
-        .y(function(d){ return yScale(d.temperature); });
+        .x(function(d){ return xScaleTime(d.time); })
+        .y(function(d){ return yScaleTemperature(d.temperature); });
 
-      graphTemperature = chart.append("g")
-        .attr("class", "graphTemperature");
-      graphTemperature
-        .append("g") 
-        .attr("class", "axisBottom");
+      chart
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .append("g")
+        .attr("class", "axisBottom")
+
+
+      graphTemperature = chart.append("svg")
+        .attr("class", "graphTemperature")
+        .style("height", heightTemperature)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
       graphTemperature
         .append("g")
         .attr("class", "axisLeft")
@@ -141,12 +143,12 @@
           d.temperature = +d.temperature;
         })
 
-        var key = function(d){
-          return d.time;
-        }
+        // var key = function(d){
+        //   return d.time;
+        // }
 
-        xScale.domain(d3.extent(mydata, function(d) { return d.time; }));
-        yScale.domain([-40, 40]);
+        xScaleTime.domain(d3.extent(mydata, function(d) { return d.time; }));
+        yScaleTemperature.domain([-40, 40]);
         // yScale.domain(d3.extent(mydata, function(d) { return d.temperature; }));
 
         graphTemperature
@@ -155,14 +157,14 @@
           .duration(500)
           .attr("d", lineTemperature(mydata));
 
-        graphTemperature
+        chart
           .select(".axisBottom")
           .attr("transform", "translate(0," + height + ")")
-          .call(d3.axisBottom(xScale));
+          .call(d3.axisBottom(xScaleTime));
 
         graphTemperature
           .select(".axisLeft")
-          .call(d3.axisLeft(yScale))
+          .call(d3.axisLeft(yScaleTemperature))
           .select("text")
           .attr("fill", "#000")
           .attr("transform", "rotate(-90)")
